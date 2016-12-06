@@ -24,7 +24,7 @@ DATA_PATH = '../data/stl10_binary/train_X.bin'
 # path to the binary train file with labels
 LABEL_PATH = '../data/stl10_binary/train_y.bin'
 
-class image_data:
+class ImageData:
     def read_labels(self, path_to_labels):
         """
         :param path_to_labels: path to the binary file containing labels from the STL-10 dataset
@@ -112,7 +112,7 @@ class image_data:
             tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
 if __name__ == "__main__":
-    data = image_data()
+    data = ImageData()
 
     # download data if needed
     data.download_and_extract()
