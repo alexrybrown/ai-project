@@ -11,16 +11,16 @@ DEPTH = 3
 SIZE = HEIGHT * WIDTH * DEPTH
 
 # path to the directory with the data
-DATA_DIR = './data'
+DATA_DIR = '../data'
 
 # url of the binary data
 DATA_URL = 'http://ai.stanford.edu/~acoates/stl10/stl10_binary.tar.gz'
 
 # path to the binary train file with image data
-DATA_PATH = './data/stl10_binary/train_X.bin'
+DATA_PATH = '../data/stl10_binary/train_X.bin'
 
 # path to the binary train file with labels
-LABEL_PATH = './data/stl10_binary/train_y.bin'
+LABEL_PATH = '../data/stl10_binary/train_y.bin'
 
 def read_labels(path_to_labels):
     """
@@ -104,7 +104,7 @@ def download_and_extract():
             sys.stdout.write('\rDownloading %s %.2f%%' % (filename,
                 float(count * block_size) / float(total_size) * 100.0))
             sys.stdout.flush()
-        filepath, _ = urllib.urlretrieve(DATA_URL, filepath, reporthook=_progress)
+        filepath, _ = urllib.request.urlretrieve(DATA_URL, filepath, reporthook=_progress)
         print('Downloaded', filename)
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
@@ -119,10 +119,10 @@ def go():
 
     # test to check if the whole dataset is read correctly
     images = read_all_images(DATA_PATH)
-    print images.shape
+    print(images.shape)
 
     labels = read_labels(LABEL_PATH)
-    print labels.shape
+    print(labels.shape)
 
 if __name__ == '__main__':
     go()
