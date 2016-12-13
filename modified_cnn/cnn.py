@@ -9,9 +9,9 @@ import theano.tensor as T
 from theano.tensor.signal import pool
 from theano.tensor.nnet import conv2d
 
-from logistic_sgd import LogisticRegression, load_data
+from logistic_sgd import LogisticRegression, shared_dataset
 from HiddenLayer import HiddenLayer
-
+import stl10_input as stl10
 
 class LeNetConvPoolLayer(object):
     """Pool Layer of a convolutional network """
@@ -87,9 +87,9 @@ class LeNetConvPoolLayer(object):
 
 
 def evaluate_lenet5(learning_rate=0.1, n_epochs=200,
-                    dataset='mnist.pkl.gz',
+                    dataset='N/A',
                     nkerns=[20, 50], batch_size=500):
-    """ Demonstrates lenet on MNIST dataset
+    """ Demonstrates lenet on stl10 dataset
     :type learning_rate: float
     :param learning_rate: learning rate used (factor for the stochastic
                           gradient)
@@ -103,11 +103,19 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200,
 
     rng = numpy.random.RandomState(23455)
 
-    datasets = load_data(dataset)
+    images, labels = stl10.go()
 
-    train_set_x, train_set_y = datasets[0]
-    valid_set_x, valid_set_y = datasets[1]
-    test_set_x, test_set_y = datasets[2]
+    train_size, valid_size, test_size = int(images.shape[0] * 0.8), int(images.shape[0] * 0.1), int(images.shape[0] * 0.1)
+    if train_size + valid_size + test_size < images.shape[0]:
+        train_size = images.shape[0] - valid_size - test_size
+    split_indices = [train_size, train_size + valid_size]
+    train_set_x, valid_set_x, test_set_x = numpy.split(images, split_indices, 0)
+    train_set_y, valid_set_y, test_set_y = numpy.split(labels, split_indices, 0)
+
+    # Convert to Theano shared variables
+    train_set_x, train_set_y = shared_dataset((train_set_x, train_set_y))
+    valid_set_x, valid_set_y = shared_dataset((valid_set_x, valid_set_y))
+    test_set_x, test_set_y = shared_dataset((test_set_x, test_set_y))
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0]
@@ -121,7 +129,7 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200,
     index = T.lscalar()  # index to a [mini]batch
 
     # start-snippet-1
-    x = T.matrix('x')   # the data is presented as rasterized images
+    x = T.dtensor4('x')   # the data is presented as rasterized images
     y = T.ivector('y')  # the labels are presented as 1D vector of
                         # [int] labels
 
@@ -130,31 +138,31 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200,
     ######################
     print('... building the model')
 
-    # Reshape matrix of rasterized images of shape (batch_size, 28 * 28)
+    # Reshape matrix of rasterized images of shape (batch_size, 96 * 96)
     # to a 4D tensor, compatible with our LeNetConvPoolLayer
-    # (28, 28) is the size of MNIST images.
-    layer0_input = x.reshape((batch_size, 1, 28, 28))
+    # (96, 96) is the size of STL10 images
+    layer0_input = x.reshape((batch_size, 3, 96, 96))
 
     # Construct the first convolutional pooling layer:
-    # filtering reduces the image size to (28-5+1 , 28-5+1) = (24, 24)
-    # maxpooling reduces this further to (24/2, 24/2) = (12, 12)
-    # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
+    # filtering reduces the image size to (96-5+1 , 96-5+1) = (92, 92)
+    # maxpooling reduces this further to (92/2, 92/2) = (46, 46)
+    # 4D output tensor is thus of shape (batch_size, nkerns[0], 46, 46)
     layer0 = LeNetConvPoolLayer(
         rng,
         input=layer0_input,
-        image_shape=(batch_size, 1, 28, 28),
-        filter_shape=(nkerns[0], 1, 5, 5),
+        image_shape=(batch_size, 3, 96, 96),
+        filter_shape=(nkerns[0], 3, 5, 5),
         poolsize=(2, 2)
     )
 
     # Construct the second convolutional pooling layer
-    # filtering reduces the image size to (12-5+1, 12-5+1) = (8, 8)
-    # maxpooling reduces this further to (8/2, 8/2) = (4, 4)
-    # 4D output tensor is thus of shape (batch_size, nkerns[1], 4, 4)
+    # filtering reduces the image size to (46-5+1, 46-5+1) = (42, 42)
+    # maxpooling reduces this further to (42/2, 42/2) = (21, 21)
+    # 4D output tensor is thus of shape (batch_size, nkerns[1], 21, 21)
     layer1 = LeNetConvPoolLayer(
         rng,
         input=layer0.output,
-        image_shape=(batch_size, nkerns[0], 12, 12),
+        image_shape=(batch_size, nkerns[0], 46, 46),
         filter_shape=(nkerns[1], nkerns[0], 5, 5),
         poolsize=(2, 2)
     )

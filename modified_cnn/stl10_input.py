@@ -22,6 +22,7 @@ DATA_PATH = '../data/stl10_binary/train_X.bin'
 # path to the binary train file with labels
 LABEL_PATH = '../data/stl10_binary/train_y.bin'
 
+
 def read_labels(path_to_labels):
     """
     :param path_to_labels: path to the binary file containing labels from the STL-10 dataset
@@ -108,21 +109,14 @@ def download_and_extract():
         print('Downloaded', filename)
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
+
 def go():
     # download data if needed
     download_and_extract()
 
-    # test to check if the image is read correctly
-    with open(DATA_PATH) as f:
-        image = read_single_image(f)
-        plot_image(image)
-
-    # test to check if the whole dataset is read correctly
     images = read_all_images(DATA_PATH)
-    print(images.shape)
-
     labels = read_labels(LABEL_PATH)
-    print(labels.shape)
+    return images, labels
 
 if __name__ == '__main__':
     go()
